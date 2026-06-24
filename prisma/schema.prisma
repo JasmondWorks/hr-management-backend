@@ -1,0 +1,318 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums
+enum RoleType {
+  CANDIDATE
+  EMPLOYEE
+  ORGANIZATION_ADMIN
+  DEPARTMENT_ADMIN
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum EmployeeType {
+  FULL_TIME
+  PART_TIME
+  CONTRACTOR
+}
+
+enum WorkArrangement {
+  ON_SITE
+  REMOTE
+  HYBRID
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+enum ApplicationStatus {
+  APPLIED
+  INTERVIEW
+  OFFERED
+  ACCEPTED
+  REJECTED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum JobStatus {
+  OPEN
+  CLOSED
+}
+
+// Models
+
+model Organization {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String  @unique
+  description String?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+
+  users       User[]
+  departments Department[]
+}
+
+model Membership {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId         String @db.Uuid
+  organizationId String @db.Uuid
+
+  role   RoleType       @default(EMPLOYEE)
+  status EmployeeStatus @default(PENDING)
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId])
+}
+
+model User {
+  id              String       @id @default(uuid()) @db.Uuid
+  email           String       @unique
+  password        String
+  firstName       String
+  lastName        String
+  phone           String
+  role            RoleType     @default(EMPLOYEE)
+  isEmailVerified Boolean
+  memberships     Membership[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  organization    Organization?    @relation(fields: [organizationId], references: [id])
+  organizationId  String?          @db.Uuid
+  employeeProfile EmployeeProfile?
+  employee        Employee?
+  notifications   Notification[]
+}
+
+// Applications
+
+model CandidateProfile {
+  id String @id @default(uuid()) @db.Uuid
+
+  candidateId String    @unique @db.Uuid
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+
+  resumeUrl String?
+  skills    String?
+}
+
+model Candidate {
+  id        String @id @default(uuid()) @db.Uuid
+  email     String @unique
+  firstName String
+  lastName  String
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  candidateProfile CandidateProfile?
+  applications     Application[]
+}
+
+model Job {
+  id                      String                @id @default(uuid()) @db.Uuid
+  name                    String?
+  description             String
+  departmentId            String                @db.Uuid
+  department              Department            @relation(fields: [departmentId], references: [id])
+  applications            Application[]
+  departmentDesignationId String                @db.Uuid
+  departmentDesignation   DepartmentDesignation @relation(fields: [departmentDesignationId], references: [id])
+  amount                  String
+  workArrangement         WorkArrangement       @default(ON_SITE)
+  status                  JobStatus             @default(OPEN)
+}
+
+model Application {
+  id          String            @id @default(uuid()) @db.Uuid
+  jobId       String            @db.Uuid
+  job         Job               @relation(fields: [jobId], references: [id])
+  candidateId String            @db.Uuid
+  candidate   Candidate         @relation(fields: [candidateId], references: [id])
+  appliedAt   DateTime          @default(now())
+  status      ApplicationStatus @default(APPLIED)
+}
+
+// Organization Internals
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayrollStatus {
+  PENDING
+  PAID
+  UNPAID
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  ON_LEAVE
+  WEEKEND
+}
+
+model Attendance {
+  id           String           @id @default(uuid()) @db.Uuid
+  employeeId   String           @db.Uuid
+  employee     Employee         @relation(fields: [employeeId], references: [id])
+  date         DateTime         @default(now())
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  status       AttendanceStatus @default(ABSENT)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model EmployeeEnrollment {
+  id String @id @default(uuid()) @db.Uuid
+
+  employeeId String   @db.Uuid
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  departmentId String     @db.Uuid
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  designationId String                @db.Uuid
+  designation   DepartmentDesignation @relation(fields: [designationId], references: [id])
+
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Department {
+  id String @id @default(uuid()) @db.Uuid
+
+  name           String
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  jobs           Job[]
+
+  designations DepartmentDesignation[]
+
+  employeeEnrollments EmployeeEnrollment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DepartmentDesignation {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String
+  departmentId String     @db.Uuid
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  employeeEnrollments EmployeeEnrollment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  jobs      Job[]
+}
+
+model EmployeeProfile {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
+  organizationId String @db.Uuid
+}
+
+model Employee {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @unique @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  organizationId      String               @db.Uuid
+  employeeEnrollments EmployeeEnrollment[]
+  leaves              Leave[]
+  attendances         Attendance[]
+  payrolls            Payroll[]
+}
+
+model Leave {
+  id          String      @id @default(uuid()) @db.Uuid
+  employeeId  String      @db.Uuid
+  employee    Employee    @relation(fields: [employeeId], references: [id])
+  startDate   DateTime    @default(now())
+  endDate     DateTime
+  status      LeaveStatus @default(PENDING)
+  leaveReason String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Payroll {
+  id         String        @id @default(uuid()) @db.Uuid
+  employeeId String        @db.Uuid
+  employee   Employee      @relation(fields: [employeeId], references: [id])
+  month      Int
+  year       Int
+  amount     Float
+  status     PayrollStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String?
+  message   String
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+}
+
+model Settings {
+  id                          String   @id @default(uuid()) @db.Uuid
+  is2FAEnabled                Boolean  @default(false)
+  isPushNotificationsEnabled  Boolean  @default(false)
+  isEmailNotificationsEnabled Boolean  @default(false)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
