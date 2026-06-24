@@ -3,7 +3,7 @@ import { NotFoundException } from "../../core/errors/app.error";
 import type { User } from "../../generated/prisma/client";
 
 export class UserService {
-  private userRepository = new UserRepository();
+  constructor(private readonly userRepository: UserRepository) {}
 
   async getAllUsers(query: { page?: string; limit?: string }) {
     const result = await this.userRepository.findPaginated(

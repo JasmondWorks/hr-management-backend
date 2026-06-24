@@ -1,19 +1,28 @@
 import swaggerUi from "swagger-ui-express";
 import { Router } from "express";
-import type { AppModule } from "../loader";
-import { buildSpec } from "../swagger/builder";
+import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
+import { registry } from "./registry";
 
-/**
- * Pre-created Express router that serves Swagger UI.
- * Configured synchronously when initSwagger() is called in app.ts.
- */
+// Statically import the docs to trigger registration
+import "../../modules/auth/auth.docs";
+import "../../modules/user/user.docs";
+
+const generator = new OpenApiGeneratorV3(registry.definitions);
+
+const swaggerSpec = generator.generateDocument({
+  openapi: "3.0.0",
+  info: {
+    title: "HRMS API",
+    version: "1.0.0",
+    description: "Enterprise HR Management System API",
+  },
+  servers: [
+    {
+      url: "http://localhost:3000/api/v1",
+      description: "Development server",
+    },
+  ],
+});
+
 export const docsRouter = Router();
-
-/**
- * Builds the OpenAPI spec from contracts and mounts the Swagger UI middleware.
- * Must be called in app.ts before mounting docsRouter.
- */
-export function initSwagger(modules: AppModule[]): void {
-  const spec = buildSpec(modules);
-  docsRouter.use("/", swaggerUi.serve, swaggerUi.setup(spec));
-}
+docsRouter.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

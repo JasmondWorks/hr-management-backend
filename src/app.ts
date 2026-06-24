@@ -2,9 +2,9 @@ import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./core/middlewares/error.middleware";
-import { docsRouter, initSwagger } from "./core/docs/swagger";
-import { loadModules, registerModules } from "./core/loader";
-import logger from "./core/config/logger";
+import { docsRouter } from "./core/docs/swagger";
+import { authRouter } from "./modules/auth/auth.routes";
+import { userRouter } from "./modules/user/user.routes";
 
 const app = express();
 
@@ -12,16 +12,12 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// 1. Auto-discover and load feature modules from src/modules/
-const modules = loadModules();
-logger.info(`Loaded ${modules.length} module(s): ${modules.map((m) => m.name).join(", ")}`);
-
-// 2. Mount each module router under /api/v1/<name>
-registerModules(app, modules);
-
-// 3. Build Swagger spec & mount API docs
-initSwagger(modules);
+// Swagger Docs UI
 app.use("/api/v1/docs", docsRouter);
+
+// Feature API Routes
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/users", userRouter);
 
 // Error handler (always last)
 app.use(errorHandler);

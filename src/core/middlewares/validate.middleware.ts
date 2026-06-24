@@ -14,7 +14,10 @@ export const validate = (schema: z.ZodType) => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errorMessages = error.issues
-          .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+          .map((issue) => {
+            const fieldPath = issue.path.slice(1).join(".");
+            return `${fieldPath}: ${issue.message}`;
+          })
           .join(", ");
         next(new BadRequestException(`Validation failed: ${errorMessages}`));
       } else {

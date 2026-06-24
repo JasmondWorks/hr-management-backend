@@ -1,47 +1,36 @@
 import { Router } from "express";
-import { createRoute } from "../../core/framework";
+import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
-import {
-  getUsersContract,
-  getUserByIdContract,
-  deleteUserContract,
-} from "./user.contracts";
+import { UserRepository } from "./user.repository";
+import { validate } from "../../core/middlewares/validate.middleware";
+import { getUsersSchema, getUserByIdSchema } from "./user.dto";
+import { catchAsync } from "../../core/utils/catch-async";
+import { authenticate } from "../../core/middlewares/auth.middleware";
 
 const router = Router();
-const userService = new UserService();
+const userRepository = new UserRepository();
+const userService = new UserService(userRepository);
+const userController = new UserController(userService);
+
+// Apply auth middleware to all user routes
+router.use(authenticate);
 
 router.get(
   "/",
-  ...createRoute(getUsersContract, async ({ query }) => {
-    const { data, total } = await userService.getAllUsers(query as { page?: string; limit?: string });
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 10;
-
-    return {
-      status: 200,
-      message: "Users retrieved",
-      data: {
-        users: data,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      },
-    };
-  }),
+  validate(getUsersSchema),
+  catchAsync(userController.getAll),
 );
 
 router.get(
   "/:id",
-  ...createRoute(getUserByIdContract, async ({ params }) => {
-    const user = await userService.getUserById(params.id);
-    return { status: 200, data: user, message: "User retrieved" };
-  }),
+  validate(getUserByIdSchema),
+  catchAsync(userController.getById),
 );
 
 router.delete(
   "/:id",
-  ...createRoute(deleteUserContract, async ({ params }) => {
-    await userService.deleteUser(params.id);
-    return { status: 200, message: "User deleted" };
-  }),
+  validate(getUserByIdSchema),
+  catchAsync(userController.deleteOne),
 );
 
 export { router as userRouter };
