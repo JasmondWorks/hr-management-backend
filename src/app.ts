@@ -5,6 +5,7 @@ import { errorHandler } from "./core/middlewares/error.middleware";
 import { docsRouter } from "./core/docs/swagger";
 import { authRouter } from "./modules/auth/auth.routes";
 import { userRouter } from "./modules/user/user.routes";
+import { candidateRouter } from "./modules/candidate/candidate.routes";
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use("/api/v1/docs", docsRouter);
 // Feature API Routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/candidates", candidateRouter);
 
 // Error handler (always last)
 app.use(errorHandler);

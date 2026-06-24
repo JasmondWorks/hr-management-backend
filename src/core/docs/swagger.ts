@@ -6,6 +6,7 @@ import { registry } from "./registry";
 // Statically import the docs to trigger registration
 import "../../modules/auth/auth.docs";
 import "../../modules/user/user.docs";
+import "../../modules/candidate/candidate.docs";
 
 const generator = new OpenApiGeneratorV3(registry.definitions);
 
