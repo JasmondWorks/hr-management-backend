@@ -37,6 +37,13 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+// Liveness probe for the host's health checks. Deliberately does not touch the
+// database: this answers "is the process serving?", and failing it would restart
+// a healthy app during a transient database blip.
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ status: "ok", uptime: process.uptime() });
+});
+
 // Swagger Docs UI
 app.use("/api/v1/docs", docsRouter);
 

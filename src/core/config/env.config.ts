@@ -60,9 +60,11 @@ export const validateEnv = () => {
   requireEnv("POSTGRES_USER");
   requireEnv("POSTGRES_PASSWORD");
   requireEnv("POSTGRES_DB");
-  requireEnv("REDIS_HOST");
-  requireEnv("REDIS_PORT");
   requireEnv("FRONTEND_URL");
+
+  // REDIS_* are deliberately not required: the config block is read but no code
+  // connects to Redis yet. Demanding them would block startup on any host that
+  // has no Redis instance, for a dependency the app does not actually use.
 
   // Outbound email is required in production only. Locally a missing EMAIL_HOST
   // makes the mailer log messages to the console instead of sending them, so

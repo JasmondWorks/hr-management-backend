@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: hr-mgmt-backend
+    runtime: node
+    plan: free
+    region: frankfurt
+    # --include=dev is required: Render sets NODE_ENV=production, which would
+    # otherwise skip typescript and the build would have no compiler.
+    buildCommand: npm ci --include=dev && npm run build
+    # `start` runs `prisma migrate deploy` before booting, so a deploy applies
+    # any pending migrations.
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT; server.ts already reads it.
+      - key: DATABASE_URL
+        sync: false        # set to the Neon connection string
+      - key: FRONTEND_URL
+        sync: false        # the Vercel domain — drives CORS and invite links
+      - key: ACCESS_SECRET
+        generateValue: true
+      - key: REFRESH_SECRET
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRES_IN
+        value: 15m
+      - key: REFRESH_TOKEN_EXPIRES_IN
+        value: 7d
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PORT
+        value: "5432"
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+      - key: POSTGRES_DB
+        sync: false
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
