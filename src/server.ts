@@ -14,8 +14,9 @@ async function start() {
 
   // 2. Start listening
   app.listen(PORT, () => {
-    logger.info(`Server running at http://localhost:${PORT}`);
-    logger.info(`API docs at   http://localhost:${PORT}/api/v1/docs`);
+    const backendUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+    logger.info(`Server running at ${backendUrl}`);
+    logger.info(`API docs at   ${backendUrl}/api/v1/docs`);
   });
 
   // 3. Start the in-process scheduler (attendance auto check-out, etc.)

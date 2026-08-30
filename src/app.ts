@@ -14,12 +14,13 @@ const app = express();
 // API's own origin is included so the Swagger "Try it out" UI (served from this
 // server) works.
 const PORT = process.env.PORT || 5000;
+const backendUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 const allowedOrigins = [
   ...(process.env.FRONTEND_URL ?? "http://localhost:3000,http://localhost:3001")
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean),
-  `http://localhost:${PORT}`,
+  backendUrl,
 ];
 
 // Middlewares
