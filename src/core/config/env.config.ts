@@ -55,11 +55,11 @@ export const validateEnv = () => {
   requireEnv("REFRESH_SECRET");
   requireEnv("ACCESS_TOKEN_EXPIRES_IN");
   requireEnv("REFRESH_TOKEN_EXPIRES_IN");
-  requireEnv("POSTGRES_HOST");
-  requireEnv("POSTGRES_PORT");
-  requireEnv("POSTGRES_USER");
-  requireEnv("POSTGRES_PASSWORD");
-  requireEnv("POSTGRES_DB");
+  // The only database setting the application reads. POSTGRES_* are inputs to
+  // docker-compose for the local container, not to this process — requiring them
+  // forced meaningless localhost values into hosted environments while leaving
+  // the connection string that actually matters unchecked.
+  requireEnv("DATABASE_URL");
   requireEnv("FRONTEND_URL");
 
   // REDIS_* are deliberately not required: the config block is read but no code
