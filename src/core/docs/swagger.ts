@@ -36,8 +36,8 @@ const swaggerSpec = generator.generateDocument({
   },
   servers: [
     {
-      url: `http://localhost:${PORT}/api/v1`,
-      description: "Development server",
+      url: "/api/v1", // Use a relative path so it automatically infers the host from the browser
+      description: "Current environment",
     },
   ],
 });
