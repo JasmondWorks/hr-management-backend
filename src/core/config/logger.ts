@@ -4,10 +4,11 @@ const { combine, timestamp, printf, colorize, errors } = winston.format;
 
 const devFormat = combine(
   colorize(),
+  winston.format.splat(),
   timestamp({ format: "HH:mm:ss" }),
   errors({ stack: true }),
   printf(({ level, message, timestamp, stack }) => {
-    return `${timestamp} ${level}: ${stack || message}`;
+    return `${timestamp} ${level}: ${message}${stack ? `\n${stack}` : ""}`;
   }),
 );
 

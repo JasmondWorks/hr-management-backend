@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../errors/app.error";
+import { sendError } from "../utils/response.util";
 import logger from "../config/logger";
 
 export const errorHandler = (
@@ -18,11 +19,5 @@ export const errorHandler = (
     logger.error("Unexpected error: %O", err);
   }
 
-  res.status(statusCode).json({
-    success: false,
-    error: {
-      message,
-      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-    },
-  });
+  sendError(res, statusCode, message, err.stack);
 };

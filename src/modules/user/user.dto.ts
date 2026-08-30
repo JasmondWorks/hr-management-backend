@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { registry } from "../../core/docs/registry";
+import { paginationQuerySchema } from "../../core/dto/query.dto";
 
-// Reusable User model schema registered in components
 export const UserSchema = registry.register(
   "User",
   z.object({
@@ -17,12 +17,8 @@ export const UserSchema = registry.register(
   })
 );
 
-// Express validation wrappers
 export const getUsersSchema = z.object({
-  query: z.object({
-    page: z.string().optional(),
-    limit: z.string().optional(),
-  }),
+  query: paginationQuerySchema,
 });
 
 export const getUserByIdSchema = z.object({

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { registry } from "../../core/docs/registry";
 
-// Reusable payload schemas registered in components
 export const RegisterBodySchema = registry.register(
   "RegisterInput",
   z.object({
@@ -23,6 +22,10 @@ export const RegisterBodySchema = registry.register(
   }),
 );
 
+export const registerSchema = z.object({
+  body: RegisterBodySchema,
+});
+
 export const LoginBodySchema = registry.register(
   "LoginInput",
   z.object({
@@ -35,11 +38,13 @@ export const LoginBodySchema = registry.register(
   }),
 );
 
-// Express validation wrappers
-export const registerSchema = z.object({
-  body: RegisterBodySchema,
-});
-
 export const loginSchema = z.object({
   body: LoginBodySchema,
 });
+
+export const RefreshTokenBodySchema = registry.register(
+  "RefreshTokenInput",
+  z.object({
+    refreshToken: z.string({ message: "Refresh token is required" }),
+  }),
+);

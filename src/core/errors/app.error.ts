@@ -31,8 +31,23 @@ export class UnauthorizedException extends AppError {
   }
 }
 
+export class ForbiddenException extends AppError {
+  constructor(message = "You do not have permission to perform this action") {
+    super(403, message);
+  }
+}
+
 export class ConflictException extends AppError {
   constructor(message = "Conflict") {
     super(409, message);
+  }
+}
+
+// Used for a resource that existed but is deliberately no longer usable — an
+// invitation that has already been accepted or revoked. Distinct from 404 so the
+// frontend can tell "we don't know this link" from "this link is spent".
+export class GoneException extends AppError {
+  constructor(message = "This resource is no longer available") {
+    super(410, message);
   }
 }

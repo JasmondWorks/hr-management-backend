@@ -1,89 +1,66 @@
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
-import { envConfig } from "../../core/config/env.config";
 import { UnauthorizedException } from "../../core/errors/app.error";
-
-const ACCESS_COOKIE = "access_token";
-const REFRESH_COOKIE = "refresh_token";
+import { sendSuccess } from "../../core/utils/response.util";
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  private cookieOptions(maxAgeMs: number) {
-    return {
-      httpOnly: true,
-      secure: envConfig.nodeEnv === "production",
-      sameSite: "strict" as const,
-      maxAge: maxAgeMs,
-      path: "/",
-    };
-  }
+  registerOrganizationAdmin = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const user = await this.authService.registerWithRole(
+      req.body,
+      "EMPLOYEE",
+      "ORGANIZATION_ADMIN",
+    );
+    sendSuccess(res, 201, "Organization admin registered successfully", user);
+  };
 
-  private parseExpiry(expiry: string): number {
-    const match = expiry.match(/^(\d+)([smhd])$/);
-    if (!match) return 15 * 60 * 1000;
-    const value = parseInt(match[1]);
-    const unit = match[2];
-    const multipliers: Record<string, number> = {
-      s: 1000,
-      m: 60 * 1000,
-      h: 60 * 60 * 1000,
-      d: 24 * 60 * 60 * 1000,
-    };
-    return value * multipliers[unit];
-  }
+  registerEmployee = async (req: Request, res: Response): Promise<void> => {
+    const user = await this.authService.registerWithRole(
+      req.body,
+      "EMPLOYEE",
+      "REGULAR",
+    );
+    sendSuccess(res, 201, "Employee registered successfully", user);
+  };
 
-  register = async (req: Request, res: Response): Promise<void> => {
-    const user = await this.authService.register(req.body);
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      data: user,
-    });
+  registerCandidate = async (req: Request, res: Response): Promise<void> => {
+    const result = await this.authService.registerCandidate(req.body);
+    sendSuccess(res, 201, "Candidate registered successfully", result);
   };
 
   login = async (req: Request, res: Response): Promise<void> => {
-    const { user, accessToken, refreshToken } = await this.authService.login(req.body);
+    const { user, accessToken, refreshToken } = await this.authService.login(
+      req.body,
+    );
 
-    const accessMaxAge = this.parseExpiry(envConfig.jwt.accessExpiresIn as string);
-    const refreshMaxAge = this.parseExpiry(envConfig.jwt.refreshExpiresIn as string);
-
-    res.cookie(ACCESS_COOKIE, accessToken, this.cookieOptions(accessMaxAge));
-    res.cookie(REFRESH_COOKIE, refreshToken, this.cookieOptions(refreshMaxAge));
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: user,
+    // Both tokens are returned in the body. Cookie storage of the refresh token
+    // is owned entirely by the Next.js frontend (BFF route handlers).
+    sendSuccess(res, 200, "Login successful", {
+      user,
+      accessToken,
+      refreshToken,
     });
   };
 
-  logout = async (req: Request, res: Response): Promise<void> => {
-    res.clearCookie(ACCESS_COOKIE, { path: "/" });
-    res.clearCookie(REFRESH_COOKIE, { path: "/" });
-    res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-    });
+  logout = async (_req: Request, res: Response): Promise<void> => {
+    sendSuccess(res, 200, "Logged out successfully");
   };
 
   refresh = async (req: Request, res: Response): Promise<void> => {
-    const oldRefreshToken = req.cookies?.[REFRESH_COOKIE];
+    // The refresh token arrives in the body (sent by the frontend from its
+    // httpOnly cookie), not from a cookie the backend manages.
+    const oldRefreshToken = req.body?.refreshToken;
     if (!oldRefreshToken) {
       throw new UnauthorizedException("No refresh token provided");
     }
 
-    const { accessToken, refreshToken } = this.authService.refreshTokens(oldRefreshToken);
+    const { accessToken, refreshToken } =
+      await this.authService.refreshTokens(oldRefreshToken);
 
-    const accessMaxAge = this.parseExpiry(envConfig.jwt.accessExpiresIn as string);
-    const refreshMaxAge = this.parseExpiry(envConfig.jwt.refreshExpiresIn as string);
-
-    res.cookie(ACCESS_COOKIE, accessToken, this.cookieOptions(accessMaxAge));
-    res.cookie(REFRESH_COOKIE, refreshToken, this.cookieOptions(refreshMaxAge));
-
-    res.status(200).json({
-      success: true,
-      message: "Tokens refreshed",
-    });
+    sendSuccess(res, 200, "Tokens refreshed", { accessToken, refreshToken });
   };
 }

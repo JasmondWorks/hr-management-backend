@@ -1,15 +1,39 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./core/middlewares/error.middleware";
 import { docsRouter } from "./core/docs/swagger";
-import { authRouter } from "./modules/auth/auth.routes";
-import { userRouter } from "./modules/user/user.routes";
-import { candidateRouter } from "./modules/candidate/candidate.routes";
+import { router as v1Routes } from "./routes/v1.routes";
 
 const app = express();
 
+// Allowed browser origins. `credentials: true` forbids "*", so we use an
+// explicit allowlist. Defaults cover the Next.js dev server on 3000/3001;
+// FRONTEND_URL (comma-separated) adds/overrides for other environments. The
+// API's own origin is included so the Swagger "Try it out" UI (served from this
+// server) works.
+const PORT = process.env.PORT || 5000;
+const allowedOrigins = [
+  ...(process.env.FRONTEND_URL ?? "http://localhost:3000,http://localhost:3001")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+  `http://localhost:${PORT}`,
+];
+
 // Middlewares
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow non-browser clients (no Origin header) and allowlisted origins.
+      // For anything else, deny WITHOUT throwing (no 500) — the browser simply
+      // won't receive CORS headers and blocks the response client-side.
+      callback(null, !origin || allowedOrigins.includes(origin));
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -17,9 +41,7 @@ app.use(cookieParser());
 app.use("/api/v1/docs", docsRouter);
 
 // Feature API Routes
-app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/users", userRouter);
-app.use("/api/v1/candidates", candidateRouter);
+app.use("/api/v1", v1Routes);
 
 // Error handler (always last)
 app.use(errorHandler);

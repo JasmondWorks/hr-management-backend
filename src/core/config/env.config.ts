@@ -21,6 +21,23 @@ export const envConfig = {
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASSWORD,
   },
+
+  email: {
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+    from: process.env.EMAIL_FROM,
+  },
+
+  // Base URL of the web app. Links we email (invitations, etc.) are built from
+  // this, so it must be the address the recipient can actually reach — not the
+  // API's own host. FRONTEND_URL may be a comma-separated CORS list; the first
+  // entry is the canonical one.
+  frontendUrl: (process.env.FRONTEND_URL ?? "http://localhost:3000")
+    .split(",")[0]
+    .trim()
+    .replace(/\/$/, ""),
 };
 
 function requireEnv(key: string): string {
@@ -45,4 +62,16 @@ export const validateEnv = () => {
   requireEnv("POSTGRES_DB");
   requireEnv("REDIS_HOST");
   requireEnv("REDIS_PORT");
+  requireEnv("FRONTEND_URL");
+
+  // Outbound email is required in production only. Locally a missing EMAIL_HOST
+  // makes the mailer log messages to the console instead of sending them, so
+  // development needs no inbox.
+  if (process.env.NODE_ENV === "production") {
+    requireEnv("EMAIL_HOST");
+    requireEnv("EMAIL_PORT");
+    requireEnv("EMAIL_USER");
+    requireEnv("EMAIL_PASS");
+    requireEnv("EMAIL_FROM");
+  }
 };

@@ -9,7 +9,7 @@ export const CandidateProfileSchema = registry.register(
     candidateId: z.string().uuid(),
     resumeUrl: z.string().nullable(),
     skills: z.string().nullable(),
-  })
+  }),
 );
 
 // Output Candidate Schema
@@ -23,7 +23,7 @@ export const CandidateSchema = registry.register(
     createdAt: z.string(),
     updatedAt: z.string(),
     candidateProfile: CandidateProfileSchema.nullable().optional(),
-  })
+  }),
 );
 
 // Swagger Register Candidate Body Schema (including binary file upload)
@@ -38,11 +38,14 @@ export const RegisterCandidateBodySchema = z.object({
     .string({ message: "Last name is required" })
     .min(2, "Last name must be at least 2 characters long"),
   skills: z.string().optional(),
-  resume: z.string().openapi({
-    type: "string",
-    format: "binary",
-    description: "Candidate's resume (PDF file)",
-  }),
+  resume: z
+    .string()
+    .openapi({
+      type: "string",
+      format: "binary",
+      description: "Candidate's resume (PDF file)",
+    })
+    .optional(),
 });
 
 // Express Validation Schema (Excludes the binary file since it is handled by Multer)
