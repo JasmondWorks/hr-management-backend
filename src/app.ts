@@ -40,7 +40,17 @@ app.use(cookieParser());
 // Liveness probe for the host's health checks. Deliberately does not touch the
 // database: this answers "is the process serving?", and failing it would restart
 // a healthy app during a transient database blip.
-app.get("/healthz", (_req, res) => {
+app.get("/", (_req, res) => {
+  const location = `${_req.protocol}://${_req.headers.host}`;
+  res.json({
+    message: "Welcome to the Human Resource Management System Backend",
+    docs: `${location}/api/v1/docs`,
+    health: `${location}/health`,
+    routes: `${location}/api/v1`,
+  });
+});
+
+app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", uptime: process.uptime() });
 });
 
