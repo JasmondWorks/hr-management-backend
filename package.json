@@ -2,7 +2,7 @@
   "name": "hr-mgmt-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
     "start": "prisma migrate deploy && node dist/server.js",
     "dev": "nodemon src/server.ts",
